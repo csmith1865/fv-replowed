@@ -2,10 +2,8 @@
 A revival project for the world's finest Flash farming game
 
 ## Requirements
-* A Windows environment (10+ recommended)
-* PHP == 7.4.x (7.4.33 NTS recommended)
-* MySQL >= 5.5.3 (5.7.44 recommended)
-* Laragon (latest portable recommended)
+* PHP >= 8.3.x
+* MySQL >= 5.x (8.4.3 recommended)
 * Game assets from farmville/assets
 * A copy of this repo
 
