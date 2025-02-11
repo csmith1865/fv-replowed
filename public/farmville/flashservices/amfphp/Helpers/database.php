@@ -4,10 +4,10 @@ require_once ('config.php');
 
 class Database {
 
-    private $host = DB_SERVER;
-    private $username = DB_USERNAME;
-    private $password = DB_PASSWORD;
-    private $dbname = DB_NAME;
+    private $host = "DB_SERVER"; // replace only the name, don't remove the "
+    private $username = "DB_USERNAME"; // replace only the name, don't remove the "
+    private $password = "DB_PASSWORD"; // replace only the name, don't remove the "
+    private $dbname = "DB_NAME"; // replace only the name, don't remove the "
     private $db = null;
 
     // connect to database
