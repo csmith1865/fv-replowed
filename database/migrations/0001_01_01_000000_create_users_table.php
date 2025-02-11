@@ -60,6 +60,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('playermeta', function (Blueprint $table) {
+            $table->id();
+            $table->string('uid', 20);
+	    $table->string('meta_key', 255);
+	    $table->longText('meta_value');
+        });
+
         Schema::create('userworlds', function (Blueprint $table) {
             $table->id();
             $table->string('uid', 20);
@@ -82,6 +89,7 @@ return new class extends Migration
         Schema::dropIfExists('sessions');
         Schema::dropIfExists('useravatars');
         Schema::dropIfExists('usermeta');
+        Schema::dropIfExists('playermeta');
         Schema::dropIfExists('userworlds');
     }
 };
