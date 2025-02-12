@@ -63,8 +63,8 @@ return new class extends Migration
         Schema::create('playermeta', function (Blueprint $table) {
             $table->id();
             $table->string('uid', 20);
-	    $table->string('meta_key', 255);
-	    $table->longText('meta_value');
+            $table->string('meta_key', 255);
+            $table->longText('meta_value');
         });
 
         Schema::create('userworlds', function (Blueprint $table) {
