@@ -24,7 +24,7 @@
                         </ul>
                         <br>
                         <button id="download-btn" class="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">{{ __('Download Assets') }}</button>
-                        @if (is_dir(public_path('tmp')) && count(glob(public_path('tmp/') . "*")) == 1)
+                        @if (is_dir(public_path('tmp')) && count(glob(public_path('tmp/') . "*")) == 4)
                         <button id="extract-btn" class="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">{{ __('Extract Assets') }}</button>
                         @endif
                         <div id="progress-container" style="display: none;">
@@ -53,16 +53,18 @@
                 });
 
                 // Poll progress every 500ms
-                let progressInterval = setInterval(function () {
-                    $.get("{{ route('download.progress') }}", function (data) {
-                        $('#progress').text("File "+ data.file_num+" Progress "+ data.progress);
-                        if (data.progress >= 100) clearInterval(progressInterval);
-                    });
-                }, 500);
+                // let progressInterval = setInterval(function () {
+                //     $.get("{{ route('download.progress') }}", function (data) {
+                //         $('#progress').text("File "+ data.file_num+" Progress "+ data.progress);
+                //         if (data.progress >= 100) clearInterval(progressInterval);
+                //     });
+                // }, 500);
             });
 
             $('#extract-btn').click(function(){
                 console.log("Extract clicked")
+                $('#progress-container').show();
+                $('#progress').text(0);
                 $.ajax({
                     url: "{{ route('extract.file') }}",
                     type: "POST",
@@ -71,6 +73,14 @@
                         console.log(response.files)
                     }
                 });
+
+                 // Poll progress every 500ms
+                 let progressInterval = setInterval(function () {
+                    $.get("{{ route('extract.progress') }}", function (data) {
+                        $('#progress').text("File "+ data.file_num+" Progress "+ data.progress);
+                        if (data.finished == 1) clearInterval(progressInterval);
+                    });
+                }, 500);
             })
         });
     </script>

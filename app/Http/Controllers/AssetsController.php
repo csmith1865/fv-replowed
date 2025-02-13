@@ -12,7 +12,7 @@ class AssetsController extends Controller
 {
 
     private $downloadUrl = "https://archive.org/download/original-farmville/";
-    
+
     // Uncomment for Prod
     private $files = array(
         [
@@ -52,25 +52,17 @@ class AssetsController extends Controller
             $directory = public_path("tmp");
 
             $filePath = $directory . '/' . $file["filename"];
-
+            
             if (!File::exists($directory)) {
                 File::makeDirectory($directory, 0777, true, true);
             }
-            
+
+            if (file_exists($filePath)) continue;
             // Reset progress
             Session::put('download_progress', 0);
-
             try {
-                $response = Http::withOptions([
-                    'sink' => $filePath, // Write directly to file
-                    'progress' => function ($downloadTotal, $downloadedBytes) {
-                        if ($downloadTotal > 0) {
-                            $progress = ($downloadedBytes / $downloadTotal) * 100;
-                            Session::put('download_progress', (int) $progress);
-                        }
-                    },
-                    'verify' => false
-                ])->get($this->downloadUrl.$file["filename"]);
+                $bytes = $this->downloadFile($this->downloadUrl.$file["filename"], $filePath);
+                
             } catch (\Exception $e) {
                 
                 return response()->json(['error' => 'Download failed: ' . $e->getMessage()], 500);
@@ -83,6 +75,39 @@ class AssetsController extends Controller
 
         return response()->json(['message' => 'Download completed!']);
 
+    }
+
+    private function downloadFile($srcName, $dstName, $chunkSize = 1, $returnbytes = true) {
+        $chunksize = $chunkSize*(1024*1024); // How many bytes per chunk
+        $data = '';
+        $bytesCount = 0;
+
+        $options = array(
+            "ssl"=>array(
+                "verify_peer"=>false,
+                "verify_peer_name"=>false,
+            ),
+        );
+        $context  = stream_context_create($options);
+
+        $handle = fopen($srcName, 'rb', false, $context);
+        $fp = fopen($dstName, 'w');
+        if ($handle === false) {
+            return false;
+        }
+        while (!feof($handle)) {
+            $data = fread($handle, $chunksize);
+            fwrite($fp, $data, strlen($data));
+            if ($returnbytes) {
+                $bytesCount += strlen($data);
+            }
+        }
+        $status = fclose($handle);
+        fclose($fp);
+        if ($returnbytes && $status) {
+            return $bytesCount; // Return number of bytes delivered like readfile() does.
+        }
+        return $status;
     }
 
     public function getProgress()
