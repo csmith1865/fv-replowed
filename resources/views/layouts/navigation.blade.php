@@ -15,6 +15,11 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    @if (is_dir(public_path('farmville/assets/hashed/assets')))
+                        <x-nav-link :href="route('game')" :active="request()->routeIs('game')">
+                            {{ __('Play') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
