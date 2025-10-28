@@ -660,13 +660,11 @@ class Player {
             $res_uns[] = $this->uid;
         }
         
-        
-        
         set_meta($pid, 'pending_neighbors', serialize($res_uns));
 
     }
 
-    private function getPendingNeighbors(){
+    public function getPendingNeighbors(){
         $pendingNeighbors = get_meta($this->uid, 'pending_neighbors');
 
         if (!$pendingNeighbors){
@@ -675,7 +673,7 @@ class Player {
         return unserialize($pendingNeighbors);
     }
 
-    private function getPlayerData($uid){
+    public function getPlayerData($uid){
 
         $conn = $this->db->getDb();
         $query = "SELECT us.uid as uid, us.name as name, um.firstName as firstname, um.lastName as lastname FROM users AS us INNER JOIN usermeta AS um ON us.uid = um.uid WHERE us.uid LIKE '{$uid}'";
