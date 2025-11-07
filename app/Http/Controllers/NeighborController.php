@@ -12,7 +12,7 @@ class NeighborController extends Controller
     {
         $user = Auth::user();
         
-        // Buscar vizinhos atuais do meta
+        // Fetch current meta neighbors
         $currentNeighborsMeta = DB::table('playermeta')
             ->where('uid', $user->uid)
             ->where('meta_key', 'current_neighbors')
@@ -23,7 +23,7 @@ class NeighborController extends Controller
         $neighbors = [];
         
         if (!empty($neighborIds)) {
-            // Buscar dados dos vizinhos
+            // Fetch neighbor data
             $neighborsQuery = DB::table('users as u')
                 ->join('usermeta as um', 'u.uid', '=', 'um.uid')
                 ->join('useravatars as ua', 'u.uid', '=', 'ua.uid')
@@ -37,7 +37,7 @@ class NeighborController extends Controller
                 )
                 ->get();
             
-            // Agrupar dados por vizinho
+            // Group data by neighbor
             $groupedNeighbors = [];
             foreach ($neighborsQuery as $row) {
                 $avatarData = @unserialize($row->avatar_value, ['allowed_classes' => false]);
@@ -56,7 +56,7 @@ class NeighborController extends Controller
                 }
             }
             
-            // Formatar para o padrão do FarmVille
+            // Format to FarmVille standard
             foreach ($groupedNeighbors as $neighbor) {
                 $neighbors[] = [
                     'uid' => $neighbor['uid'],
@@ -84,14 +84,14 @@ class NeighborController extends Controller
         $user = Auth::user();
         $neighborId = $request->input('neighbor_id');
         
-        // Verificar se o vizinho existe
+        // Check if neighbor exists
         $neighborExists = DB::table('users')->where('uid', $neighborId)->exists();
         
         if (!$neighborExists) {
             return response()->json(['error' => 'Vizinho não encontrado'], 404);
         }
         
-        // Buscar vizinhos atuais
+        // Fetch current neighbors
         $currentNeighborsMeta = DB::table('playermeta')
             ->where('uid', $user->uid)
             ->where('meta_key', 'current_neighbors')
@@ -99,11 +99,11 @@ class NeighborController extends Controller
         
         $neighborIds = $currentNeighborsMeta ? unserialize($currentNeighborsMeta) : [];
         
-        // Adicionar novo vizinho se não existe
+        // Add new neighbor if doesn't exist
         if (!in_array($neighborId, $neighborIds)) {
             $neighborIds[] = $neighborId;
             
-            // Verificar se já existe registro
+            // Check if record already exists
             $exists = DB::table('playermeta')
                 ->where('uid', $user->uid)
                 ->where('meta_key', 'current_neighbors')
@@ -131,7 +131,7 @@ class NeighborController extends Controller
         $user = Auth::user();
         $neighborId = $request->input('neighbor_id');
         
-        // Buscar vizinhos atuais
+        // Fetch current neighbors
         $currentNeighborsMeta = DB::table('playermeta')
             ->where('uid', $user->uid)
             ->where('meta_key', 'current_neighbors')
@@ -139,19 +139,19 @@ class NeighborController extends Controller
         
         $neighborIds = $currentNeighborsMeta ? unserialize($currentNeighborsMeta) : [];
         
-        // Remover vizinho
+        // Remove neighbor
         $neighborIds = array_values(array_filter($neighborIds, function($id) use ($neighborId) {
             return $id != $neighborId;
         }));
         
         if (empty($neighborIds)) {
-        // Se ficou vazio, deleta o registro
+        // If empty, delete record
             DB::table('playermeta')
                 ->where('uid', $user->uid)
                 ->where('meta_key', 'current_neighbors')
                 ->delete();
         } else {
-            // Caso contrário, apenas atualiza
+            // Otherwise, just update
             DB::table('playermeta')
                 ->where('uid', $user->uid)
                 ->where('meta_key', 'current_neighbors')
@@ -165,16 +165,16 @@ class NeighborController extends Controller
     {
         $user = Auth::user();
         
-        // Buscar vizinhos atuais
+        // Fetch current neighbors
         $currentNeighborsMeta = DB::table('playermeta')
             ->where('uid', $user->uid)
             ->where('meta_key', 'current_neighbors')
             ->value('meta_value');
         
         $currentNeighborIds = $currentNeighborsMeta ? unserialize($currentNeighborsMeta) : [];
-        $currentNeighborIds[] = $user->uid; // Excluir o próprio usuário
+        $currentNeighborIds[] = $user->uid; // Exclude the user itself
         
-        // Buscar usuários que não são vizinhos
+        // Fetch users who are not neighbors
         $potentialNeighbors = DB::table('users as u')
             ->join('usermeta as um', 'u.uid', '=', 'um.uid')
             ->join('useravatars as ua', 'u.uid', '=', 'ua.uid')
@@ -188,7 +188,7 @@ class NeighborController extends Controller
             )
             ->get();
         
-        // Agrupar dados
+        // Group data
         $groupedUsers = [];
         foreach ($potentialNeighbors as $row) {
             $avatarData = @unserialize($row->avatar_value, ['allowed_classes' => false]);
@@ -214,7 +214,7 @@ class NeighborController extends Controller
     {
         $user = Auth::user();
         
-        // Buscar solicitações pendentes
+        // Fetch pending requests
         $pendingNeighborsMeta = DB::table('playermeta')
             ->where('uid', $user->uid)
             ->where('meta_key', 'pending_neighbors')
@@ -274,7 +274,7 @@ class NeighborController extends Controller
         $neighborId = $validated['neighbor_id'];
         $user = Auth::user();
         
-        // Remover das solicitações pendentes
+        // Remove from pending requests
         $pendingMeta = DB::table('playermeta')
             ->where('uid', $user->uid)
             ->where('meta_key', 'pending_neighbors')
@@ -287,20 +287,20 @@ class NeighborController extends Controller
         }));
 
         if (empty($pendingIds)) {
-            // Se não restaram pendentes, deleta o registro
+            // If no pending left, delete record
             DB::table('playermeta')
                 ->where('uid', $user->uid)
                 ->where('meta_key', 'pending_neighbors')
                 ->delete();
         } else {
-            // Caso contrário, apenas atualiza
+            // Otherwise, just update
             DB::table('playermeta')
                 ->where('uid', $user->uid)
                 ->where('meta_key', 'pending_neighbors')
                 ->update(['meta_value' => serialize($pendingIds)]);
         }
         
-        // Adicionar aos vizinhos atuais
+        // Add to current neighbors
         $currentMeta = DB::table('playermeta')
             ->where('uid', $user->uid)
             ->where('meta_key', 'current_neighbors')
@@ -330,7 +330,7 @@ class NeighborController extends Controller
             }
         }
         
-        // Adicionar o usuário atual como vizinho do outro usuário também
+        // Add current user as neighbor of the other user as well
         $neighborCurrentMeta = DB::table('playermeta')
             ->where('uid', $neighborId)
             ->where('meta_key', 'current_neighbors')
@@ -368,7 +368,7 @@ class NeighborController extends Controller
         $user = Auth::user();
         $neighborId = $request->input('neighbor_id');
         
-        // Buscar lista de solicitações pendentes
+        // Fetch pending requests list
         $pendingMeta = DB::table('playermeta')
             ->where('uid', $user->uid)
             ->where('meta_key', 'pending_neighbors')
@@ -376,19 +376,19 @@ class NeighborController extends Controller
         
         $pendingIds = $pendingMeta ? unserialize($pendingMeta) : [];
 
-        // Remover o vizinho rejeitado
+        // Remove rejected neighbor
         $pendingIds = array_values(array_filter($pendingIds, function($id) use ($neighborId) {
             return $id != $neighborId;
         }));
 
         if (empty($pendingIds)) {
-            // Se não restaram pendentes, deleta o registro
+            // If no pending left, delete record
             DB::table('playermeta')
                 ->where('uid', $user->uid)
                 ->where('meta_key', 'pending_neighbors')
                 ->delete();
         } else {
-            // Caso contrário, apenas atualiza
+            // Otherwise, just update
             DB::table('playermeta')
                 ->where('uid', $user->uid)
                 ->where('meta_key', 'pending_neighbors')
@@ -403,14 +403,14 @@ class NeighborController extends Controller
         $user = Auth::user();
         $neighborId = $request->input('neighbor_id');
         
-        // Verificar se o vizinho existe
+        // Check if neighbor exists
         $neighborExists = DB::table('users')->where('uid', $neighborId)->exists();
         
         if (!$neighborExists) {
             return response()->json(['error' => 'Usuário não encontrado'], 404);
         }
         
-        // Adicionar à lista de pendentes do destinatário
+        // Add to recipient's pending list
         $pendingMeta = DB::table('playermeta')
             ->where('uid', $neighborId)
             ->where('meta_key', 'pending_neighbors')

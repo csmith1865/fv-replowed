@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\DB;
 class CleanNeighborData extends Command
 {
     protected $signature = 'neighbors:clean';
-    protected $description = 'Limpa dados duplicados ou inconsistentes de vizinhos';
+    protected $description = 'Clean duplicate or inconsistent neighbor data';
 
     public function handle()
     {
-        $this->info('Iniciando limpeza de dados de vizinhos...');
+        $this->info('Starting neighbor data cleanup...');
         
-        // Buscar todos os registros de vizinhos
+        // Fetch all neighbor records
         $records = DB::table('playermeta')
             ->whereIn('meta_key', ['current_neighbors', 'pending_neighbors'])
             ->get();
@@ -25,10 +25,10 @@ class CleanNeighborData extends Command
             $data = unserialize($record->meta_value);
             
             if (is_array($data)) {
-                // Remover duplicatas
+                // Remove duplicates
                 $originalCount = count($data);
                 $data = array_unique($data);
-                $data = array_values($data); // Reindexar
+                $data = array_values($data); // Reindex
                 
                 if (count($data) !== $originalCount) {
                     DB::table('playermeta')
@@ -36,12 +36,13 @@ class CleanNeighborData extends Command
                         ->update(['meta_value' => serialize($data)]);
                     
                     $cleaned++;
-                    $this->line("Limpou {$record->uid} - {$record->meta_key}: {$originalCount} -> " . count($data));
+                    $this->line("Cleaned {$record->uid} - {$record->meta_key}: {$originalCount} -> " . count($data));
                 }
             }
         }
         
-        $this->info("Limpeza concluída! {$cleaned} registros atualizados.");
+        $this->info("Cleanup completed! {$cleaned} records updated.");
+
         return 0;
     }
 }

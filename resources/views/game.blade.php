@@ -2565,12 +2565,12 @@
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {
-                                    console.log('Vizinho adicionado com sucesso');
-                                    // Recarregar a página ou atualizar dinamicamente
+                                    console.log('Neighbor added successfully');
+                                    // Reload page or update dynamically
                                     location.reload();
                                 }
                             })
-                            .catch(error => console.error('Erro:', error));
+                            .catch(error => console.error('Error:', error));
                         }
 
                         function removeNeighborById(neighborId) {
@@ -2585,11 +2585,11 @@
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {
-                                    console.log('Vizinho removido com sucesso');
+                                    console.log('Neighbor removed successfully');
                                     location.reload();
                                 }
                             })
-                            .catch(error => console.error('Erro:', error));
+                            .catch(error => console.error('Error:', error));
                         }
 
                         function getNonAppFriendsInfo() {
@@ -2693,19 +2693,19 @@
                         let allPotentialNeighbors = [];
                         let currentActiveTab = 'pending';
 
-                        // Abrir modal
+                        // Open modal
                         function openNeighborModal() {
                             document.getElementById('neighborModal').style.display = 'block';
                             loadPendingRequests();
                             switchTab('pending');
                         }
 
-                        // Fechar modal
+                        // Close modal
                         function closeNeighborModal() {
                             document.getElementById('neighborModal').style.display = 'none';
                         }
 
-                        // Fechar modal ao clicar fora
+                        // Close modal when clicking outside
                         window.onclick = function(event) {
                             const modal = document.getElementById('neighborModal');
                             if (event.target == modal) {
@@ -2713,27 +2713,27 @@
                             }
                         }
 
-                        // Trocar de aba
+                        // Switch tabs
                         function switchTab(tabName) {
                             currentActiveTab = tabName;
                             
-                            // Esconder todos os conteúdos
+                            // Hide all contents
                             document.querySelectorAll('.tab-content').forEach(content => {
                                 content.style.display = 'none';
                             });
                             
-                            // Resetar estilo das tabs
+                            // Reset tab styles
                             document.querySelectorAll('.neighbor-tab').forEach(tab => {
                                 tab.style.backgroundColor = '#B8D4E3';
                                 tab.style.color = '#333';
                             });
                             
-                            // Mostrar conteúdo selecionado
+                            // Show selected content
                             document.getElementById(tabName + 'Content').style.display = 'block';
                             document.getElementById(tabName + 'Tab').style.backgroundColor = '#7FB3D5';
                             document.getElementById(tabName + 'Tab').style.color = 'white';
                             
-                            // Carregar dados conforme a aba
+                            // Load data according to tab
                             if (tabName === 'pending') {
                                 loadPendingRequests();
                             } else if (tabName === 'current') {
@@ -2743,7 +2743,7 @@
                             }
                         }
 
-                        // Carregar solicitações pendentes
+                        // Load pending requests
                         function loadPendingRequests() {
                             fetch('/neighbors/pending')
                                 .then(response => response.json())
@@ -2754,7 +2754,7 @@
                                     pendingCount.textContent = data.count;
                                     
                                     if (data.pending.length === 0) {
-                                        pendingList.innerHTML = '<p style="text-align: center; color: #7F8C8D; padding: 20px; font-style: italic;">📭 Nenhuma solicitação pendente</p>';
+                                        pendingList.innerHTML = '<p style="text-align: center; color: #7F8C8D; padding: 20px; font-style: italic;">📭 No pending requests</p>';
                                     } else {
                                         pendingList.innerHTML = data.pending.map(neighbor => {
                                             const initial = neighbor.first_name.charAt(0).toUpperCase();
@@ -2768,8 +2768,8 @@
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <button class="btn-action btn-accept" onclick="acceptNeighbor('${neighbor.uid}')">✓ Aceitar</button>
-                                                        <button class="btn-action btn-reject" onclick="rejectNeighbor('${neighbor.uid}')">✗ Rejeitar</button>
+                                                        <button class="btn-action btn-accept" onclick="acceptNeighbor('${neighbor.uid}')">✓ Accept</button>
+                                                        <button class="btn-action btn-reject" onclick="rejectNeighbor('${neighbor.uid}')">✗ Reject</button>
                                                     </div>
                                                 </div>
                                             `;
@@ -2777,12 +2777,12 @@
                                     }
                                 })
                                 .catch(error => {
-                                    console.error('Erro ao carregar solicitações:', error);
-                                    document.getElementById('pendingList').innerHTML = '<p style="text-align: center; color: #E74C3C;">❌ Erro ao carregar solicitações</p>';
+                                    console.error('Error loading requests:', error);
+                                    document.getElementById('pendingList').innerHTML = '<p style="text-align: center; color: #E74C3C;">❌ Error loading requests</p>';
                                 });
                         }
 
-                        // Carregar vizinhos atuais
+                        // Load current neighbors
                         function loadCurrentNeighbors() {
                             fetch('/neighbors/data')
                                 .then(response => response.json())
@@ -2794,7 +2794,7 @@
                                     currentCount.textContent = neighbors.length;
                                     
                                     if (neighbors.length === 0) {
-                                        currentList.innerHTML = '<p style="text-align: center; color: #7F8C8D; padding: 20px; font-style: italic;">👥 Você ainda não tem vizinhos</p>';
+                                        currentList.innerHTML = '<p style="text-align: center; color: #7F8C8D; padding: 20px; font-style: italic;">👥 You dont have neighbors yet</p>';
                                     } else {
                                         currentList.innerHTML = neighbors.map(neighbor => {
                                             const initial = neighbor.first_name.charAt(0).toUpperCase();
@@ -2808,7 +2808,7 @@
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <button class="btn-action btn-remove" onclick="removeNeighbor('${neighbor.uid}')">🗑️ Remover</button>
+                                                        <button class="btn-action btn-remove" onclick="removeNeighbor('${neighbor.uid}')">🗑️ Remove</button>
                                                     </div>
                                                 </div>
                                             `;
@@ -2816,12 +2816,12 @@
                                     }
                                 })
                                 .catch(error => {
-                                    console.error('Erro ao carregar vizinhos:', error);
-                                    document.getElementById('currentList').innerHTML = '<p style="text-align: center; color: #E74C3C;">❌ Erro ao carregar vizinhos</p>';
+                                    console.error('Error loading neighbors:', error);
+                                    document.getElementById('currentList').innerHTML = '<p style="text-align: center; color: #E74C3C;">❌ Error loading neighbors</p>';
                                 });
                         }
 
-                        // Carregar usuários disponíveis
+                        // Load available users
                         function loadPotentialNeighbors() {
                             fetch('/neighbors/potential')
                                 .then(response => response.json())
@@ -2830,17 +2830,17 @@
                                     displayPotentialNeighbors(allPotentialNeighbors);
                                 })
                                 .catch(error => {
-                                    console.error('Erro ao carregar usuários:', error);
-                                    document.getElementById('findList').innerHTML = '<p style="text-align: center; color: #E74C3C;">❌ Erro ao carregar usuários</p>';
+                                    console.error('Error loading users:', error);
+                                    document.getElementById('findList').innerHTML = '<p style="text-align: center; color: #E74C3C;">❌ Error loading users</p>';
                                 });
                         }
 
-                        // Exibir usuários disponíveis
+                        // Display available users
                         function displayPotentialNeighbors(users) {
                             const findList = document.getElementById('findList');
                             
                             if (users.length === 0) {
-                                findList.innerHTML = '<p style="text-align: center; color: #7F8C8D; padding: 20px; font-style: italic;">🔍 Nenhum usuário encontrado</p>';
+                                findList.innerHTML = '<p style="text-align: center; color: #7F8C8D; padding: 20px; font-style: italic;">🔍 No users found</p>';
                             } else {
                                 findList.innerHTML = users.map(user => {
                                     const initial = user.first_name.charAt(0).toUpperCase();
@@ -2854,7 +2854,7 @@
                                                 </div>
                                             </div>
                                             <div>
-                                                <button class="btn-action btn-add" onclick="sendNeighborRequest('${user.uid}')">➕ Adicionar</button>
+                                                <button class="btn-action btn-add" onclick="sendNeighborRequest('${user.uid}')">➕ Add</button>
                                             </div>
                                         </div>
                                     `;
@@ -2862,7 +2862,7 @@
                             }
                         }
 
-                        // Filtrar usuários disponíveis
+                        // Filter available users
                         function filterPotentialNeighbors() {
                             const searchTerm = document.getElementById('searchNeighbor').value.toLowerCase();
                             const filtered = allPotentialNeighbors.filter(user => {
@@ -2874,9 +2874,9 @@
                             displayPotentialNeighbors(filtered);
                         }
 
-                        // Aceitar vizinho
+                        // Accept neighbor
                         function acceptNeighbor(neighborId) {
-                            if (!confirm('Deseja aceitar esta solicitação de vizinhança?')) return;
+                            if (!confirm('Do you want to accept this neighbor request?')) return;
                             
                             fetch('/neighbors/accept', {
                                 method: 'POST',
@@ -2891,21 +2891,21 @@
                                 if (data.success) {
                                     alert('✅ ' + data.message);
                                     loadPendingRequests();
-                                    // Recarregar a página para atualizar o jogo
+                                    // Reload page to update game
                                     setTimeout(() => location.reload(), 1500);
                                 } else {
-                                    alert('❌ Erro ao aceitar vizinho');
+                                    alert('❌ Error accepting neighbor');
                                 }
                             })
                             .catch(error => {
-                                console.error('Erro:', error);
-                                alert('❌ Erro ao processar solicitação');
+                                console.error('Error:', error);
+                                alert('❌ Error processing request');
                             });
                         }
 
-                        // Rejeitar vizinho
+                        // Reject neighbor
                         function rejectNeighbor(neighborId) {
-                            if (!confirm('Deseja rejeitar esta solicitação?')) return;
+                            if (!confirm('Do you want to reject this request?')) return;
                             
                             fetch('/neighbors/reject', {
                                 method: 'POST',
@@ -2921,18 +2921,18 @@
                                     alert('✅ ' + data.message);
                                     loadPendingRequests();
                                 } else {
-                                    alert('❌ Erro ao rejeitar solicitação');
+                                    alert('❌ Error rejecting request');
                                 }
                             })
                             .catch(error => {
-                                console.error('Erro:', error);
-                                alert('❌ Erro ao processar solicitação');
+                                console.error('Error:', error);
+                                alert('❌ Error processing request');
                             });
                         }
 
-                        // Remover vizinho
+                        // Remove neighbor
                         function removeNeighbor(neighborId) {
-                            if (!confirm('Deseja remover este vizinho?')) return;
+                            if (!confirm('Do you want to remove this neighbor?')) return;
                             
                             fetch('/neighbors/remove', {
                                 method: 'POST',
@@ -2947,21 +2947,21 @@
                                 if (data.success) {
                                     alert('✅ ' + data.message);
                                     loadCurrentNeighbors();
-                                    // Recarregar a página para atualizar o jogo
+                                    // Reload page to update game
                                     setTimeout(() => location.reload(), 1500);
                                 } else {
-                                    alert('❌ Erro ao remover vizinho');
+                                    alert('❌ Error removing neighbor');
                                 }
                             })
                             .catch(error => {
-                                console.error('Erro:', error);
-                                alert('❌ Erro ao processar solicitação');
+                                console.error('Error:', error);
+                                alert('❌ Error processing request');
                             });
                         }
 
-                        // Enviar solicitação
+                        // Send request
                         function sendNeighborRequest(neighborId) {
-                            if (!confirm('Deseja enviar solicitação de vizinhança?')) return;
+                            if (!confirm('Do you want to send neighbor request?')) return;
                             
                             fetch('/neighbors/send-request', {
                                 method: 'POST',
@@ -2976,22 +2976,22 @@
                                 if (data.success) {
                                     alert('✅ ' + data.message);
                                 } else {
-                                    alert('❌ ' + (data.error || 'Erro ao enviar solicitação'));
+                                    alert('❌ ' + (data.error || 'Error sending request'));
                                 }
                             })
                             .catch(error => {
-                                console.error('Erro:', error);
-                                alert('❌ Erro ao enviar solicitação');
+                                console.error('Error:', error);
+                                alert('❌ Error sending request');
                             });
                         }
 
-                        // Carregar contador de solicitações ao carregar a página
+                        // Load request counter on page load
                         document.addEventListener('DOMContentLoaded', function() {
                             fetch('/neighbors/pending')
                                 .then(response => response.json())
                                 .then(data => {
                                     if (data.count > 0) {
-                                        // Mostrar badge no botão Add Neighbors
+                                        // Show badge on Add Neighbors button
                                         const addNeighborBtn = document.querySelector('a[title="Add Neighbors"]');
                                         if (addNeighborBtn) {
                                             addNeighborBtn.innerHTML += `<span style="position: absolute; top: 5px; right: 5px; background-color: #E74C3C; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">${data.count}</span>`;
@@ -2999,10 +2999,10 @@
                                         }
                                     }
                                 })
-                                .catch(error => console.error('Erro ao carregar contador:', error));
+                                .catch(error => console.error('Error loading counter:', error));
                         });
 
-                        // Atualizar badge de notificações
+                        // Update notification badge
                         function updateNotificationBadge() {
                             fetch('/neighbors/pending')
                                 .then(response => response.json())
@@ -3015,13 +3015,13 @@
                                         }
                                     }
                                 })
-                                .catch(error => console.error('Erro ao atualizar badge:', error));
+                                .catch(error => console.error('Error updating badge:', error));
                         }
 
-                        // Atualizar a cada 30 segundos
+                        // Update every 30 seconds
                         setInterval(updateNotificationBadge, 30000);
 
-                        // Atualizar ao carregar
+                        // Update on load
                         document.addEventListener('DOMContentLoaded', updateNotificationBadge);
                     </script>
 
@@ -3320,25 +3320,25 @@
                     </script>
 
                     <center>
-                        <!-- Modal de Gerenciamento de Vizinhos -->
+                        <!-- Neighbor Management Modal -->
                         <div id="neighborModal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);">
                             <div style="background-color: #fefefe; margin: 5% auto; padding: 0; border: 3px solid #8B4513; width: 600px; border-radius: 10px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19); font-family: Arial, sans-serif;">
                                 <!-- Header -->
                                 <div style="padding: 15px 20px; background: linear-gradient(to bottom, #7FB3D5 0%, #5C9FCC 100%); color: white; border-radius: 7px 7px 0 0; display: flex; justify-content: space-between; align-items: center;">
-                                    <h2 style="margin: 0; font-size: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">🌾 Gerenciar Vizinhos</h2>
+                                    <h2 style="margin: 0; font-size: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">🌾 Manage Neighbors</h2>
                                     <span onclick="closeNeighborModal()" style="cursor: pointer; font-size: 28px; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">&times;</span>
                                 </div>
                                 
                                 <!-- Tabs -->
                                 <div style="display: flex; background-color: #E8F4F8; border-bottom: 2px solid #5C9FCC;">
                                     <button class="neighbor-tab" onclick="switchTab('pending')" id="pendingTab" style="flex: 1; padding: 12px; background-color: #7FB3D5; color: white; border: none; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.3s;">
-                                        Solicitações <span id="pendingCount" style="background-color: #E74C3C; border-radius: 50%; padding: 2px 8px; font-size: 12px; margin-left: 5px;">0</span>
+                                        Requests <span id="pendingCount" style="background-color: #E74C3C; border-radius: 50%; padding: 2px 8px; font-size: 12px; margin-left: 5px;">0</span>
                                     </button>
                                     <button class="neighbor-tab" onclick="switchTab('current')" id="currentTab" style="flex: 1; padding: 12px; background-color: #B8D4E3; color: #333; border: none; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.3s;">
-                                        Meus Vizinhos <span id="currentCount" style="background-color: #3498DB; color: white; border-radius: 50%; padding: 2px 8px; font-size: 12px; margin-left: 5px;">0</span>
+                                        My Neighbors <span id="currentCount" style="background-color: #3498DB; color: white; border-radius: 50%; padding: 2px 8px; font-size: 12px; margin-left: 5px;">0</span>
                                     </button>
                                     <button class="neighbor-tab" onclick="switchTab('find')" id="findTab" style="flex: 1; padding: 12px; background-color: #B8D4E3; color: #333; border: none; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.3s;">
-                                        Adicionar Vizinhos
+                                        Add Neighbors
                                     </button>
                                 </div>
                                 
@@ -3347,14 +3347,14 @@
                                     <!-- Pending Requests Tab -->
                                     <div id="pendingContent" class="tab-content">
                                         <div id="pendingList" style="display: flex; flex-direction: column; gap: 10px;">
-                                            <p style="text-align: center; color: #7F8C8D; font-style: italic;">Carregando solicitações...</p>
+                                            <p style="text-align: center; color: #7F8C8D; font-style: italic;">Loading requests...</p>
                                         </div>
                                     </div>
                                     
                                     <!-- Current Neighbors Tab -->
                                     <div id="currentContent" class="tab-content" style="display: none;">
                                         <div id="currentList" style="display: flex; flex-direction: column; gap: 10px;">
-                                            <p style="text-align: center; color: #7F8C8D; font-style: italic;">Carregando vizinhos...</p>
+                                            <p style="text-align: center; color: #7F8C8D; font-style: italic;">Loading neighbors...</p>
                                         </div>
                                     </div>
                                     
@@ -3364,14 +3364,14 @@
                                             <input type="text" id="searchNeighbor" placeholder="Buscar por nome ou ID..." style="width: 100%; padding: 10px; border: 2px solid #7FB3D5; border-radius: 5px; font-size: 14px; box-sizing: border-box;" onkeyup="filterPotentialNeighbors()">
                                         </div>
                                         <div id="findList" style="display: flex; flex-direction: column; gap: 10px;">
-                                            <p style="text-align: center; color: #7F8C8D; font-style: italic;">Carregando usuários...</p>
+                                            <p style="text-align: center; color: #7F8C8D; font-style: italic;">Loading users...</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Badge de Notificações -->
+                        <!-- Notification Badge -->
                         <div style="color:white;font-size:11px;font-weight:normal;left:3px;position:absolute;right:4px;text-align:center;top:4px;width:20px;display:block;margin: 0px; padding: 0px;" id="notificationBadge">0</div>
 
                         <style>
