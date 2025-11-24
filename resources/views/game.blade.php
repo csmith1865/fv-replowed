@@ -2543,25 +2543,53 @@
 
                         function getFriendData() {
                             console.log("getFriendData")
-                            var friendData = [{
-                                "uid": "0241862870",
-                                "first_name": "Bill",
-                                "last_name": "Keh",
-                                "name": "kehayeah",
-                                "pic_square": "",
-                                "sex": "m",
-                                "___is_app_user": true,
-                                "___allowed_restrictions": false,
-                                "___pic_big": ""
-                            }];
+                            var friendData = {!! json_encode($neighbors ?? []) !!};
                             return friendData;
                         }
 
                         function getAppFriendIds() {
                             console.log("getAppFriendIds")
-                            var appFriendIds = ["0241862870"];
-                            return [];
+                            var appFriendIds = {!! json_encode($neighborIds ?? []) !!};
                             return appFriendIds;
+                        }
+
+                        function addNeighborById(neighborId) {
+                            fetch('/neighbors/add', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ neighbor_id: neighborId })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    console.log('Neighbor added successfully');
+                                    // Reload page or update dynamically
+                                    location.reload();
+                                }
+                            })
+                            .catch(error => console.error('Error:', error));
+                        }
+
+                        function removeNeighborById(neighborId) {
+                            fetch('/neighbors/remove', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ neighbor_id: neighborId })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    console.log('Neighbor removed successfully');
+                                    location.reload();
+                                }
+                            })
+                            .catch(error => console.error('Error:', error));
                         }
 
                         function getNonAppFriendsInfo() {
@@ -2661,6 +2689,340 @@
                             var currentWorldType = "farm";
                             return currentWorldType;
                         }
+
+                        let allPotentialNeighbors = [];
+                        let currentActiveTab = 'pending';
+
+                        // Open modal
+                        function openNeighborModal() {
+                            document.getElementById('neighborModal').style.display = 'block';
+                            loadPendingRequests();
+                            switchTab('pending');
+                        }
+
+                        // Close modal
+                        function closeNeighborModal() {
+                            document.getElementById('neighborModal').style.display = 'none';
+                        }
+
+                        // Close modal when clicking outside
+                        window.onclick = function(event) {
+                            const modal = document.getElementById('neighborModal');
+                            if (event.target == modal) {
+                                closeNeighborModal();
+                            }
+                        }
+
+                        // Switch tabs
+                        function switchTab(tabName) {
+                            currentActiveTab = tabName;
+                            
+                            // Hide all contents
+                            document.querySelectorAll('.tab-content').forEach(content => {
+                                content.style.display = 'none';
+                            });
+                            
+                            // Reset tab styles
+                            document.querySelectorAll('.neighbor-tab').forEach(tab => {
+                                tab.style.backgroundColor = '#B8D4E3';
+                                tab.style.color = '#333';
+                            });
+                            
+                            // Show selected content
+                            document.getElementById(tabName + 'Content').style.display = 'block';
+                            document.getElementById(tabName + 'Tab').style.backgroundColor = '#7FB3D5';
+                            document.getElementById(tabName + 'Tab').style.color = 'white';
+                            
+                            // Load data according to tab
+                            if (tabName === 'pending') {
+                                loadPendingRequests();
+                            } else if (tabName === 'current') {
+                                loadCurrentNeighbors();
+                            } else if (tabName === 'find') {
+                                loadPotentialNeighbors();
+                            }
+                        }
+
+                        // Load pending requests
+                        function loadPendingRequests() {
+                            fetch('/neighbors/pending')
+                                .then(response => response.json())
+                                .then(data => {
+                                    const pendingList = document.getElementById('pendingList');
+                                    const pendingCount = document.getElementById('pendingCount');
+                                    
+                                    pendingCount.textContent = data.count;
+                                    
+                                    if (data.pending.length === 0) {
+                                        pendingList.innerHTML = '<p style="text-align: center; color: #7F8C8D; padding: 20px; font-style: italic;">📭 No pending requests</p>';
+                                    } else {
+                                        pendingList.innerHTML = data.pending.map(neighbor => {
+                                            const initial = neighbor.first_name.charAt(0).toUpperCase();
+                                            return `
+                                                <div class="neighbor-item">
+                                                    <div class="neighbor-info">
+                                                        <div class="neighbor-avatar">${initial}</div>
+                                                        <div>
+                                                            <div class="neighbor-name">${neighbor.first_name} ${neighbor.last_name}</div>
+                                                            <div class="neighbor-id">ID: ${neighbor.uid}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <button class="btn-action btn-accept" onclick="acceptNeighbor('${neighbor.uid}')">✓ Accept</button>
+                                                        <button class="btn-action btn-reject" onclick="rejectNeighbor('${neighbor.uid}')">✗ Reject</button>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error loading requests:', error);
+                                    document.getElementById('pendingList').innerHTML = '<p style="text-align: center; color: #E74C3C;">❌ Error loading requests</p>';
+                                });
+                        }
+
+                        // Load current neighbors
+                        function loadCurrentNeighbors() {
+                            fetch('/neighbors/data')
+                                .then(response => response.json())
+                                .then(data => {
+                                    const currentList = document.getElementById('currentList');
+                                    const currentCount = document.getElementById('currentCount');
+                                    const neighbors = data.neighbors || [];
+                                    
+                                    currentCount.textContent = neighbors.length;
+                                    
+                                    if (neighbors.length === 0) {
+                                        currentList.innerHTML = '<p style="text-align: center; color: #7F8C8D; padding: 20px; font-style: italic;">👥 You dont have neighbors yet</p>';
+                                    } else {
+                                        currentList.innerHTML = neighbors.map(neighbor => {
+                                            const initial = neighbor.first_name.charAt(0).toUpperCase();
+                                            return `
+                                                <div class="neighbor-item">
+                                                    <div class="neighbor-info">
+                                                        <div class="neighbor-avatar">${initial}</div>
+                                                        <div>
+                                                            <div class="neighbor-name">${neighbor.first_name} ${neighbor.last_name}</div>
+                                                            <div class="neighbor-id">ID: ${neighbor.uid}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <button class="btn-action btn-remove" onclick="removeNeighbor('${neighbor.uid}')">🗑️ Remove</button>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error loading neighbors:', error);
+                                    document.getElementById('currentList').innerHTML = '<p style="text-align: center; color: #E74C3C;">❌ Error loading neighbors</p>';
+                                });
+                        }
+
+                        // Load available users
+                        function loadPotentialNeighbors() {
+                            fetch('/neighbors/potential')
+                                .then(response => response.json())
+                                .then(data => {
+                                    allPotentialNeighbors = data.users || [];
+                                    displayPotentialNeighbors(allPotentialNeighbors);
+                                })
+                                .catch(error => {
+                                    console.error('Error loading users:', error);
+                                    document.getElementById('findList').innerHTML = '<p style="text-align: center; color: #E74C3C;">❌ Error loading users</p>';
+                                });
+                        }
+
+                        // Display available users
+                        function displayPotentialNeighbors(users) {
+                            const findList = document.getElementById('findList');
+                            
+                            if (users.length === 0) {
+                                findList.innerHTML = '<p style="text-align: center; color: #7F8C8D; padding: 20px; font-style: italic;">🔍 No users found</p>';
+                            } else {
+                                findList.innerHTML = users.map(user => {
+                                    const initial = user.first_name.charAt(0).toUpperCase();
+                                    return `
+                                        <div class="neighbor-item">
+                                            <div class="neighbor-info">
+                                                <div class="neighbor-avatar">${initial}</div>
+                                                <div>
+                                                    <div class="neighbor-name">${user.first_name} ${user.last_name}</div>
+                                                    <div class="neighbor-id">ID: ${user.uid}</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <button class="btn-action btn-add" onclick="sendNeighborRequest('${user.uid}')">➕ Add</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('');
+                            }
+                        }
+
+                        // Filter available users
+                        function filterPotentialNeighbors() {
+                            const searchTerm = document.getElementById('searchNeighbor').value.toLowerCase();
+                            const filtered = allPotentialNeighbors.filter(user => {
+                                return user.first_name.toLowerCase().includes(searchTerm) ||
+                                    user.last_name.toLowerCase().includes(searchTerm) ||
+                                    user.name.toLowerCase().includes(searchTerm) ||
+                                    user.uid.toLowerCase().includes(searchTerm);
+                            });
+                            displayPotentialNeighbors(filtered);
+                        }
+
+                        // Accept neighbor
+                        function acceptNeighbor(neighborId) {
+                            if (!confirm('Do you want to accept this neighbor request?')) return;
+                            
+                            fetch('/neighbors/accept', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ neighbor_id: neighborId })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    alert('✅ ' + data.message);
+                                    loadPendingRequests();
+                                    // Reload page to update game
+                                    setTimeout(() => location.reload(), 1500);
+                                } else {
+                                    alert('❌ Error accepting neighbor');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('❌ Error processing request');
+                            });
+                        }
+
+                        // Reject neighbor
+                        function rejectNeighbor(neighborId) {
+                            if (!confirm('Do you want to reject this request?')) return;
+                            
+                            fetch('/neighbors/reject', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ neighbor_id: neighborId })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    alert('✅ ' + data.message);
+                                    loadPendingRequests();
+                                } else {
+                                    alert('❌ Error rejecting request');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('❌ Error processing request');
+                            });
+                        }
+
+                        // Remove neighbor
+                        function removeNeighbor(neighborId) {
+                            if (!confirm('Do you want to remove this neighbor?')) return;
+                            
+                            fetch('/neighbors/remove', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ neighbor_id: neighborId })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    alert('✅ ' + data.message);
+                                    loadCurrentNeighbors();
+                                    // Reload page to update game
+                                    setTimeout(() => location.reload(), 1500);
+                                } else {
+                                    alert('❌ Error removing neighbor');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('❌ Error processing request');
+                            });
+                        }
+
+                        // Send request
+                        function sendNeighborRequest(neighborId) {
+                            if (!confirm('Do you want to send neighbor request?')) return;
+                            
+                            fetch('/neighbors/send-request', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ neighbor_id: neighborId })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    alert('✅ ' + data.message);
+                                } else {
+                                    alert('❌ ' + (data.error || 'Error sending request'));
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('❌ Error sending request');
+                            });
+                        }
+
+                        // Load request counter on page load
+                        document.addEventListener('DOMContentLoaded', function() {
+                            fetch('/neighbors/pending')
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.count > 0) {
+                                        // Show badge on Add Neighbors button
+                                        const addNeighborBtn = document.querySelector('a[title="Add Neighbors"]');
+                                        if (addNeighborBtn) {
+                                            addNeighborBtn.innerHTML += `<span style="position: absolute; top: 5px; right: 5px; background-color: #E74C3C; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">${data.count}</span>`;
+                                            addNeighborBtn.style.position = 'relative';
+                                        }
+                                    }
+                                })
+                                .catch(error => console.error('Error loading counter:', error));
+                        });
+
+                        // Update notification badge
+                        function updateNotificationBadge() {
+                            fetch('/neighbors/pending')
+                                .then(response => response.json())
+                                .then(data => {
+                                    const badge = document.getElementById('notificationBadge');
+                                    if (badge) {
+                                        badge.textContent = data.count;
+                                        if (data.count > 0) {
+                                            badge.style.backgroundColor = '#E74C3C';
+                                        }
+                                    }
+                                })
+                                .catch(error => console.error('Error updating badge:', error));
+                        }
+
+                        // Update every 30 seconds
+                        setInterval(updateNotificationBadge, 30000);
+
+                        // Update on load
+                        document.addEventListener('DOMContentLoaded', updateNotificationBadge);
                     </script>
 
                     <script>
@@ -2936,7 +3298,8 @@
                             "batchLimitFunctionExceptions": "%7B%0A%20%20%20%20%22UserService.saveFeatureOptions%22%3A%201%2C%0A%20%20%20%20%22UserService.publishUserAction%22%3A%201%2C%0A%20%20%20%20%22LeaderboardService.getPassedFriendFeed%22%3A%201%2C%0A%20%20%20%20%22WorldService.performAction%22%3A%201%2C%0A%20%20%20%20%22FarmService.saveIcons%22%3A%201%2C%0A%20%20%20%20%22AvatarService.saveAvatar%22%3A%201%0A%7D",
                             "batchLimiterVerboseData": 1,
                             "req_FlashControllerStartTimestamp": <?= time() ?>,
-                            "debugMode": true
+                            "debugMode": true,
+                            "neighbors": "{{ $neighborsBase64 ?? '' }}"
                         };
 
                         var swfCallback = function(e) {
@@ -2957,6 +3320,229 @@
                     </script>
 
                     <center>
+                        <!-- Neighbor Management Modal -->
+                        <div id="neighborModal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);">
+                            <div style="background-color: #fefefe; margin: 5% auto; padding: 0; border: 3px solid #8B4513; width: 600px; border-radius: 10px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19); font-family: Arial, sans-serif;">
+                                <!-- Header -->
+                                <div style="padding: 15px 20px; background: linear-gradient(to bottom, #7FB3D5 0%, #5C9FCC 100%); color: white; border-radius: 7px 7px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                                    <h2 style="margin: 0; font-size: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">🌾 Manage Neighbors</h2>
+                                    <span onclick="closeNeighborModal()" style="cursor: pointer; font-size: 28px; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">&times;</span>
+                                </div>
+                                
+                                <!-- Tabs -->
+                                <div style="display: flex; background-color: #E8F4F8; border-bottom: 2px solid #5C9FCC;">
+                                    <button class="neighbor-tab" onclick="switchTab('pending')" id="pendingTab" style="flex: 1; padding: 12px; background-color: #7FB3D5; color: white; border: none; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.3s;">
+                                        Requests <span id="pendingCount" style="background-color: #E74C3C; border-radius: 50%; padding: 2px 8px; font-size: 12px; margin-left: 5px;">0</span>
+                                    </button>
+                                    <button class="neighbor-tab" onclick="switchTab('current')" id="currentTab" style="flex: 1; padding: 12px; background-color: #B8D4E3; color: #333; border: none; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.3s;">
+                                        My Neighbors <span id="currentCount" style="background-color: #3498DB; color: white; border-radius: 50%; padding: 2px 8px; font-size: 12px; margin-left: 5px;">0</span>
+                                    </button>
+                                    <button class="neighbor-tab" onclick="switchTab('find')" id="findTab" style="flex: 1; padding: 12px; background-color: #B8D4E3; color: #333; border: none; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.3s;">
+                                        Add Neighbors
+                                    </button>
+                                </div>
+                                
+                                <!-- Content -->
+                                <div style="padding: 20px; max-height: 400px; overflow-y: auto; background-color: #FFF9E6;">
+                                    <!-- Pending Requests Tab -->
+                                    <div id="pendingContent" class="tab-content">
+                                        <div id="pendingList" style="display: flex; flex-direction: column; gap: 10px;">
+                                            <p style="text-align: center; color: #7F8C8D; font-style: italic;">Loading requests...</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Current Neighbors Tab -->
+                                    <div id="currentContent" class="tab-content" style="display: none;">
+                                        <div id="currentList" style="display: flex; flex-direction: column; gap: 10px;">
+                                            <p style="text-align: center; color: #7F8C8D; font-style: italic;">Loading neighbors...</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Find Neighbors Tab -->
+                                    <div id="findContent" class="tab-content" style="display: none;">
+                                        <div style="margin-bottom: 15px;">
+                                            <input type="text" id="searchNeighbor" placeholder="Buscar por nome ou ID..." style="width: 100%; padding: 10px; border: 2px solid #7FB3D5; border-radius: 5px; font-size: 14px; box-sizing: border-box;" onkeyup="filterPotentialNeighbors()">
+                                        </div>
+                                        <div id="findList" style="display: flex; flex-direction: column; gap: 10px;">
+                                            <p style="text-align: center; color: #7F8C8D; font-style: italic;">Loading users...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notification Badge -->
+                        <div style="color:white;font-size:11px;font-weight:normal;left:3px;position:absolute;right:4px;text-align:center;top:4px;width:20px;display:block;margin: 0px; padding: 0px;" id="notificationBadge">0</div>
+
+                        <style>
+                            .neighbor-item {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                padding: 12px 15px;
+                                background: white;
+                                border: 2px solid #D5E8F0;
+                                border-radius: 8px;
+                                transition: all 0.3s;
+                            }
+                            
+                            .neighbor-item:hover {
+                                border-color: #7FB3D5;
+                                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                                transform: translateY(-2px);
+                            }
+                            
+                            .neighbor-info {
+                                display: flex;
+                                align-items: center;
+                                gap: 12px;
+                            }
+                            
+                            .neighbor-avatar {
+                                width: 45px;
+                                height: 45px;
+                                border-radius: 50%;
+                                background: linear-gradient(135deg, #7FB3D5 0%, #5C9FCC 100%);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: white;
+                                font-weight: bold;
+                                font-size: 18px;
+                                border: 2px solid #5C9FCC;
+                            }
+                            
+                            .neighbor-name {
+                                font-weight: bold;
+                                color: #2C3E50;
+                                font-size: 15px;
+                            }
+                            
+                            .neighbor-id {
+                                font-size: 12px;
+                                color: #7F8C8D;
+                            }
+                            
+                            .btn-action {
+                                padding: 8px 16px;
+                                border: none;
+                                border-radius: 5px;
+                                cursor: pointer;
+                                font-size: 13px;
+                                font-weight: bold;
+                                transition: all 0.3s;
+                                margin-left: 5px;
+                            }
+                            
+                            .btn-accept {
+                                background-color: #27AE60;
+                                color: white;
+                            }
+                            
+                            .btn-accept:hover {
+                                background-color: #229954;
+                                transform: scale(1.05);
+                            }
+                            
+                            .btn-reject {
+                                background-color: #E74C3C;
+                                color: white;
+                            }
+                            
+                            .btn-reject:hover {
+                                background-color: #C0392B;
+                                transform: scale(1.05);
+                            }
+                            
+                            .btn-remove {
+                                background-color: #E67E22;
+                                color: white;
+                            }
+                            
+                            .btn-remove:hover {
+                                background-color: #D35400;
+                                transform: scale(1.05);
+                            }
+                            
+                            .btn-add {
+                                background-color: #3498DB;
+                                color: white;
+                            }
+                            
+                            .btn-add:hover {
+                                background-color: #2980B9;
+                                transform: scale(1.05);
+                            }
+                            
+                            .btn-action:disabled {
+                                background-color: #BDC3C7;
+                                cursor: not-allowed;
+                                transform: none;
+                            }
+                            
+                            #neighborModal::-webkit-scrollbar,
+                            .tab-content::-webkit-scrollbar {
+                                width: 8px;
+                            }
+                            
+                            #neighborModal::-webkit-scrollbar-track,
+                            .tab-content::-webkit-scrollbar-track {
+                                background: #F0F0F0;
+                                border-radius: 10px;
+                            }
+                            
+                            #neighborModal::-webkit-scrollbar-thumb,
+                            .tab-content::-webkit-scrollbar-thumb {
+                                background: #7FB3D5;
+                                border-radius: 10px;
+                            }
+                            
+                            #neighborModal::-webkit-scrollbar-thumb:hover,
+                            .tab-content::-webkit-scrollbar-thumb:hover {
+                                background: #5C9FCC;
+                            }
+
+                            /* Tooltip */
+                            .tooltip {
+                                position: relative;
+                                display: inline-block;
+                            }
+
+                            .tooltip .tooltiptext {
+                                visibility: hidden;
+                                width: 200px;
+                                background-color: #2C3E50;
+                                color: #fff;
+                                text-align: center;
+                                border-radius: 6px;
+                                padding: 8px;
+                                position: absolute;
+                                z-index: 1;
+                                bottom: 125%;
+                                left: 50%;
+                                margin-left: -100px;
+                                opacity: 0;
+                                transition: opacity 0.3s;
+                                font-size: 12px;
+                            }
+
+                            .tooltip .tooltiptext::after {
+                                content: "";
+                                position: absolute;
+                                top: 100%;
+                                left: 50%;
+                                margin-left: -5px;
+                                border-width: 5px;
+                                border-style: solid;
+                                border-color: #2C3E50 transparent transparent transparent;
+                            }
+
+                            .tooltip:hover .tooltiptext {
+                                visibility: visible;
+                                opacity: 1;
+                            }
+                        </style>
+
                         <img src="img/logo.jpg" style="width: 250px;" />
                         <div>
                             <!-- SESSION HEADER -->
@@ -2971,7 +3557,8 @@
                                 <div style="position:relative;float:left;height:40px;background-image:url(/img/game_bar/ecb8d4257f9af29b38f1a10c4ccb322c4ebb2e8c.png);background-color: transparent; background-position: 0px 20px; background-repeat: no-repeat; border-width: 0px; border-style: none; margin: 0px; padding: 0px 0px 0px 5px; border-color: white; ">
                                     <a href="#" title="Free Gifts" style="color:rgb(59, 89, 152);cursor:pointer;width:91px;background-image:url(/img/game_bar/c7ae80613dbb3a1aa848ddf6fb3baea29c233ec6.png);background-color: transparent; text-decoration:none;float:left;height:27px;margin: 11px 0px 0px 4px; " target="_blank"></a>
                                     <a href="#" title="Play" style="color:rgb(59, 89, 152);cursor:pointer;width:36px;background-image:url(/img/game_bar/8bba081e4b32e771144af4a7404209007dff7756.png);background-color: transparent; text-decoration:none;float:left;height:27px;background-position: 0px -27px; margin: 11px 0px 0px 4px;" target="_blank"></a>
-                                    <a href="#" title="Add Neighbors" onclick="document.getElementById('flashapp').popR2AddNeighbor('open')" style="color:rgb(59, 89, 152);cursor:pointer;width:99px;background-image:url(/img/game_bar/c82d6a5be3328edc136a4f5f2ba7f3ed6228f7b4.png);background-color: transparent; text-decoration:none;float:left;height:27px;margin: 11px 0px 0px 4px; "></a>
+                                    <a href="#" title="Add Neighbors" onclick="openNeighborModal(); return false;" id="addNeighborsBtn" style="color:rgb(59, 89, 152);cursor:pointer;width:99px;background-image:url(/img/game_bar/c82d6a5be3328edc136a4f5f2ba7f3ed6228f7b4.png);background-color: transparent; text-decoration:none;float:left;height:27px;margin: 11px 0px 0px 4px; position: relative;"></a>
+                                    <!--a href="#" title="Add Neighbors" onclick="document.getElementById('flashapp').popR2AddNeighbor('open')" style="color:rgb(59, 89, 152);cursor:pointer;width:99px;background-image:url(/img/game_bar/c82d6a5be3328edc136a4f5f2ba7f3ed6228f7b4.png);background-color: transparent; text-decoration:none;float:left;height:27px;margin: 11px 0px 0px 4px; "></a-->
                                     <a href="#" target="_blank" title="Add Farm Coins &amp; Cash" style="color:rgb(59, 89, 152);cursor:pointer;width:278px;background-image:url(/img/game_bar/15509e6078e7b7da47c0cd1bf5c643bd9b2ddb64.png);background-color: transparent; text-decoration:none;float:left;height:27px;margin: 11px 0px 0px 4px; ">
                                         <div style="position:absolute;width:160px;height:36px;background-image:url(/img/game_bar/a8e4cf2a4842f3dec98ec268d66475c8173b8026.png);background-color: transparent; left:362px;top:1px;display:block;background-repeat: no-repeat; margin: 0px; padding: 0px; ">
                                             <!-- Timer -->
